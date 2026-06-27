@@ -6,8 +6,6 @@
     "strict": true,
     "jsx": "preserve",
     "lib": ["ESNext", "DOM"],
-    "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] },
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "resolveJsonModule": true,
