@@ -81,7 +81,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.receipt-wrapper { display: flex; justify-content: center; padding: 2rem; min-height: 100vh; background: #f1f5f9; }
+.receipt-wrapper { display: flex; justify-content: center; padding: 2rem 1rem; min-height: 100vh; background: #f3f4f6; }
 .receipt { background: #fff; width: 320px; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 0.875rem; }
 .receipt-header { text-align: center; margin-bottom: 0.5rem; }
 .salon-name { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.25rem; color: #0f172a; }
