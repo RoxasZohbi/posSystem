@@ -11,7 +11,7 @@ class Bill extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['uuid', 'customer_name', 'customer_phone', 'staff_id', 'billed_by', 'total', 'status', 'synced_at'];
+    protected $fillable = ['uuid', 'customer_name', 'customer_phone', 'staff_id', 'billed_by', 'total', 'status', 'payment_type', 'synced_at'];
     protected $casts = ['total' => 'decimal:2', 'synced_at' => 'datetime'];
 
     public function items(): HasMany { return $this->hasMany(BillItem::class); }

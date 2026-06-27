@@ -14,6 +14,14 @@
               <option v-for="s in staffList" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Payment Type</label>
+            <select v-model="form.payment_type">
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="online">Online</option>
+            </select>
+          </div>
         </div>
         <div class="form-card">
           <h3>Add Items</h3>
@@ -49,6 +57,7 @@
             </div>
             <div class="receipt-total"><strong>Total</strong><strong>PKR {{ total.toFixed(2) }}</strong></div>
           </div>
+          <div class="payment-badge" :class="form.payment_type">{{ form.payment_type.toUpperCase() }}</div>
           <p v-if="offline.isOffline" class="offline-notice">Offline — bill will be queued for sync.</p>
           <button @click="submit" :disabled="submitting || !form.items.length || !form.customer_name || !form.staff_id" class="btn-submit">
             {{ submitting ? 'Saving...' : offline.isOffline ? 'Queue Bill' : 'Save Bill' }}
@@ -73,6 +82,7 @@ interface BillForm {
   customer_name: string
   customer_phone: string
   staff_id: number | string
+  payment_type: 'cash' | 'card' | 'online'
   items: BillItem[]
 }
 
@@ -84,7 +94,7 @@ const staffList = ref<StaffMember[]>([])
 const activeTab = ref<'service' | 'deal'>('service')
 const submitting = ref(false)
 const successMsg = ref('')
-const form = ref<BillForm>({ customer_name: '', customer_phone: '', staff_id: '', items: [] })
+const form = ref<BillForm>({ customer_name: '', customer_phone: '', staff_id: '', payment_type: 'cash', items: [] })
 const total = computed(() => form.value.items.reduce((sum, i) => sum + parseFloat(String(i.price)), 0))
 
 function addItem(type: 'service' | 'deal', item: Service | Deal) {
@@ -105,7 +115,7 @@ async function submit() {
   try {
     const result = await billsStore.submitBill({ ...form.value })
     successMsg.value = result.offline ? 'Bill queued for sync.' : 'Bill saved!'
-    form.value = { customer_name: '', customer_phone: '', staff_id: '', items: [] }
+    form.value = { customer_name: '', customer_phone: '', staff_id: '', payment_type: 'cash', items: [] }
   } finally {
     submitting.value = false
   }
@@ -142,6 +152,10 @@ onMounted(async () => {
 .receipt-item { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.875rem; }
 .remove-btn { background: none; border: none; cursor: pointer; color: #ef4444; font-size: 0.75rem; }
 .receipt-total { display: flex; justify-content: space-between; padding: 0.75rem 0 0; font-size: 1rem; }
+.payment-badge { display: inline-block; margin-top: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+.payment-badge.cash { background: #dcfce7; color: #16a34a; }
+.payment-badge.card { background: #dbeafe; color: #1d4ed8; }
+.payment-badge.online { background: #ede9fe; color: #7c3aed; }
 .offline-notice { color: #f59e0b; font-size: 0.8rem; background: #fffbeb; padding: 0.5rem; border-radius: 4px; margin-top: 0.75rem; }
 .btn-submit { width: 100%; margin-top: 1rem; padding: 0.75rem; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }

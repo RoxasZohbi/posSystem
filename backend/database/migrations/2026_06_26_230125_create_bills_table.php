@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('billed_by')->constrained('users');
             $table->decimal('total', 10, 2);
             $table->enum('status', ['pending', 'synced', 'voided'])->default('pending');
+            $table->enum('payment_type', ['cash', 'card', 'online'])->default('cash');
             $table->timestamp('synced_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

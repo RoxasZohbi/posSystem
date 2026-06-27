@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('phone');
             $table->string('nic');
             $table->string('thumbprint')->nullable();
+            $table->decimal('commission_rate', 5, 2)->default(0.00);
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->timestamps();
