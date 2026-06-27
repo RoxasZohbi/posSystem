@@ -1,21 +1,20 @@
 {
     "name": "laravel/laravel",
     "type": "project",
-    "description": "Salon POS System - Laravel Backend",
-    "license": "MIT",
+    "description": "Salon POS Backend",
     "require": {
-        "php": "^8.3",
-        "laravel/framework": "^13.8",
-        "laravel/sanctum": "^4.3",
-        "laravel/tinker": "^3.0",
-        "spatie/laravel-permission": "^8.0"
+        "php": "^8.2",
+        "laravel/framework": "^11.0",
+        "laravel/sanctum": "^4.0",
+        "spatie/laravel-permission": "^6.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "laravel/pint": "^1.27",
+        "laravel/pint": "^1.13",
+        "laravel/sail": "^1.26",
         "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^12.5"
+        "nunomaduro/collision": "^8.0",
+        "phpunit/phpunit": "^11.0"
     },
     "autoload": {
         "psr-4": {
@@ -42,18 +41,19 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
-            "@php artisan migrate --graceful --ansi",
-            "@php artisan db:seed --ansi"
+            "@php artisan config:clear --ansi",
+            "@php artisan storage:link --ansi"
         ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
     },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
-        }
+        "sort-packages": true
     },
     "minimum-stability": "stable",
     "prefer-stable": true
