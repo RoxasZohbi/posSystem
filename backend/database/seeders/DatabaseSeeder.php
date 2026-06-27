@@ -42,5 +42,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Owner', 'password' => bcrypt('password')]
         );
         $user->assignRole('owner');
+
+        $this->call(DemoDataSeeder::class);
     }
 }
