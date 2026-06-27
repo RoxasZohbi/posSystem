@@ -19,25 +19,26 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../stores/auth.js'
+import { useAuthStore } from '../stores/auth'
+import type { LoginCredentials } from '../types/index'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
-const form = ref({ email: '', password: '' })
+const form = ref<LoginCredentials>({ email: '', password: '' })
 const loading = ref(false)
-const error = ref(null)
+const error = ref<string | null>(null)
 
 async function handleLogin() {
   loading.value = true
   error.value = null
   try {
     await auth.login(form.value)
-    router.push(route.query.redirect || '/dashboard')
-  } catch (e) {
+    router.push((route.query.redirect as string) || '/dashboard')
+  } catch (e: any) {
     error.value = e.response?.data?.message || 'Login failed. Check your credentials.'
   } finally {
     loading.value = false

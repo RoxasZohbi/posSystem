@@ -37,33 +37,49 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getStaff, createStaff, updateStaff, deleteStaff } from '../api/index.js'
+import StaffRepository from '../Repositories/StaffRepository'
+import type { StaffMember } from '../types/index'
 
-const staff = ref([])
+const staff = ref<StaffMember[]>([])
 const loading = ref(false)
 const showForm = ref(false)
-const editing = ref(null)
-const form = ref({ name: '', email: '', phone: '', nic: '' })
+const editing = ref<number | null>(null)
+const form = ref<Omit<StaffMember, 'id'>>({ name: '', email: '', phone: '', nic: '' })
 
 async function load() {
   loading.value = true
-  try { const { data } = await getStaff(); staff.value = data }
+  try { const { data } = await StaffRepository.getAll(); staff.value = data }
   finally { loading.value = false }
 }
 
-function edit(s) { editing.value = s.id; form.value = { name: s.name, email: s.email, phone: s.phone, nic: s.nic }; showForm.value = true }
-function cancel() { showForm.value = false; editing.value = null; form.value = { name: '', email: '', phone: '', nic: '' } }
-
-async function save() {
-  editing.value ? await updateStaff(editing.value, form.value) : await createStaff(form.value)
-  cancel(); load()
+function edit(s: StaffMember) {
+  editing.value = s.id
+  form.value = { name: s.name, email: s.email, phone: s.phone, nic: s.nic }
+  showForm.value = true
 }
 
-async function remove(id) {
+function cancel() {
+  showForm.value = false
+  editing.value = null
+  form.value = { name: '', email: '', phone: '', nic: '' }
+}
+
+async function save() {
+  if (editing.value) {
+    await StaffRepository.update(editing.value, form.value)
+  } else {
+    await StaffRepository.create(form.value)
+  }
+  cancel()
+  load()
+}
+
+async function remove(id: number) {
   if (!confirm('Delete this staff member?')) return
-  await deleteStaff(id); load()
+  await StaffRepository.delete(id)
+  load()
 }
 
 onMounted(load)

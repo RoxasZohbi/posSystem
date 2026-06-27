@@ -28,7 +28,7 @@
       <tbody>
         <tr v-for="e in expenses" :key="e.id">
           <td>{{ e.date }}</td>
-          <td>PKR {{ parseFloat(e.amount).toFixed(2) }}</td>
+          <td>PKR {{ parseFloat(String(e.amount)).toFixed(2) }}</td>
           <td>{{ e.note || '-' }}</td>
           <td>{{ e.logged_by?.name || '-' }}</td>
           <td><button @click="remove(e.id)" class="btn-sm btn-danger">Delete</button></td>
@@ -38,32 +38,45 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getExpenses, createExpense, deleteExpense } from '../api/index.js'
+import ExpenseRepository from '../Repositories/ExpenseRepository'
+import type { Expense } from '../types/index'
 
-const expenses = ref([])
+interface ExpenseForm {
+  date: string
+  amount: number | string
+  note: string
+}
+
+const expenses = ref<Expense[]>([])
 const loading = ref(false)
 const showForm = ref(false)
 const filterDate = ref('')
-const form = ref({ date: new Date().toISOString().split('T')[0], amount: '', note: '' })
+const form = ref<ExpenseForm>({ date: new Date().toISOString().split('T')[0], amount: '', note: '' })
 
 async function load() {
   loading.value = true
-  try { const { data } = await getExpenses(filterDate.value ? { date: filterDate.value } : {}); expenses.value = data }
-  finally { loading.value = false }
+  try {
+    const params = filterDate.value ? { date: filterDate.value } : undefined
+    const { data } = await ExpenseRepository.getAll(params)
+    expenses.value = data
+  } finally {
+    loading.value = false
+  }
 }
 
 async function save() {
-  await createExpense(form.value)
+  await ExpenseRepository.create(form.value as Omit<Expense, 'id' | 'logged_by'>)
   showForm.value = false
   form.value = { date: new Date().toISOString().split('T')[0], amount: '', note: '' }
   load()
 }
 
-async function remove(id) {
+async function remove(id: number) {
   if (!confirm('Delete this expense?')) return
-  await deleteExpense(id); load()
+  await ExpenseRepository.delete(id)
+  load()
 }
 
 onMounted(load)

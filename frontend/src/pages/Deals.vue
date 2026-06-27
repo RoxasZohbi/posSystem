@@ -30,7 +30,7 @@
       <tbody>
         <tr v-for="d in deals" :key="d.id">
           <td>{{ d.name }}</td>
-          <td>PKR {{ parseFloat(d.price).toFixed(2) }}</td>
+          <td>PKR {{ parseFloat(String(d.price)).toFixed(2) }}</td>
           <td>{{ d.services?.map(s => s.name).join(', ') || '-' }}</td>
           <td><span :class="d.is_active ? 'badge-active' : 'badge-inactive'">{{ d.is_active ? 'Active' : 'Inactive' }}</span></td>
           <td>
@@ -43,34 +43,64 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getDeals, createDeal, updateDeal, deleteDeal, getServices } from '../api/index.js'
+import DealRepository from '../Repositories/DealRepository'
+import ServiceRepository from '../Repositories/ServiceRepository'
+import type { Deal, Service } from '../types/index'
 
-const deals = ref([])
-const services = ref([])
+interface DealForm {
+  name: string
+  price: number | string
+  is_active: boolean
+  service_ids: number[]
+}
+
+const deals = ref<Deal[]>([])
+const services = ref<Service[]>([])
 const loading = ref(false)
 const showForm = ref(false)
-const editing = ref(null)
-const form = ref({ name: '', price: '', is_active: true, service_ids: [] })
+const editing = ref<number | null>(null)
+const form = ref<DealForm>({ name: '', price: '', is_active: true, service_ids: [] })
 
 async function load() {
   loading.value = true
-  try { const [d, s] = await Promise.all([getDeals(), getServices()]); deals.value = d.data; services.value = s.data }
-  finally { loading.value = false }
+  try {
+    const [d, s] = await Promise.all([DealRepository.getAll(), ServiceRepository.getAll()])
+    deals.value = d.data
+    services.value = s.data
+  } finally {
+    loading.value = false
+  }
 }
 
-function edit(d) { editing.value = d.id; form.value = { name: d.name, price: d.price, is_active: d.is_active, service_ids: d.services?.map(s => s.id) || [] }; showForm.value = true }
-function cancel() { showForm.value = false; editing.value = null; form.value = { name: '', price: '', is_active: true, service_ids: [] } }
+function edit(d: Deal) {
+  editing.value = d.id
+  form.value = { name: d.name, price: d.price, is_active: d.is_active, service_ids: d.services?.map(s => s.id) || [] }
+  showForm.value = true
+}
+
+function cancel() {
+  showForm.value = false
+  editing.value = null
+  form.value = { name: '', price: '', is_active: true, service_ids: [] }
+}
 
 async function save() {
-  editing.value ? await updateDeal(editing.value, form.value) : await createDeal(form.value)
-  cancel(); load()
+  const { service_ids, ...rest } = form.value
+  if (editing.value) {
+    await DealRepository.update(editing.value, { ...rest, service_ids } as any)
+  } else {
+    await DealRepository.create({ ...rest, service_ids } as any)
+  }
+  cancel()
+  load()
 }
 
-async function remove(id) {
+async function remove(id: number) {
   if (!confirm('Delete this deal?')) return
-  await deleteDeal(id); load()
+  await DealRepository.delete(id)
+  load()
 }
 
 onMounted(load)
