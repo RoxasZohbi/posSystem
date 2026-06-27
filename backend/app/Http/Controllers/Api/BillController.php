@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bill;
+use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,12 @@ class BillController extends Controller
     public function index(): JsonResponse
     {
         return response()->json(Bill::with(['items', 'staff:id,name', 'billedBy:id,name'])->latest()->paginate(20));
+    }
+
+    public function show(string $uuid): JsonResponse
+    {
+        $bill = Bill::where('uuid', $uuid)->with(['items', 'staff:id,name', 'billedBy:id,name'])->firstOrFail();
+        return response()->json($bill);
     }
 
     public function store(Request $request): JsonResponse
@@ -30,7 +37,13 @@ class BillController extends Controller
             'items.*.name' => 'required|string',
             'items.*.price' => 'required|numeric|min:0',
         ]);
+
         $bill = DB::transaction(function () use ($validated, $request) {
+            Customer::updateOrCreate(
+                ['phone' => $validated['customer_phone']],
+                ['name' => $validated['customer_name']]
+            );
+
             $bill = Bill::create([
                 'uuid' => Str::uuid(),
                 'customer_name' => $validated['customer_name'],
@@ -45,6 +58,7 @@ class BillController extends Controller
             foreach ($validated['items'] as $item) $bill->items()->create($item);
             return $bill;
         });
+
         return response()->json($bill->load(['items', 'staff:id,name']), 201);
     }
 
@@ -62,10 +76,17 @@ class BillController extends Controller
             'bills.*.items.*.name' => 'required|string',
             'bills.*.items.*.price' => 'required|numeric|min:0',
         ]);
+
         $synced = [];
         DB::transaction(function () use ($request, &$synced) {
             foreach ($request->bills as $billData) {
                 if (Bill::where('uuid', $billData['uuid'])->exists()) { $synced[] = $billData['uuid']; continue; }
+
+                Customer::updateOrCreate(
+                    ['phone' => $billData['customer_phone']],
+                    ['name' => $billData['customer_name']]
+                );
+
                 $bill = Bill::create([
                     'uuid' => $billData['uuid'],
                     'customer_name' => $billData['customer_name'],
@@ -81,6 +102,7 @@ class BillController extends Controller
                 $synced[] = $billData['uuid'];
             }
         });
+
         return response()->json(['synced' => $synced]);
     }
 }

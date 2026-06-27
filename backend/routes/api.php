@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DealController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
@@ -40,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/bills', [BillController::class, 'index']);
         Route::post('/bills', [BillController::class, 'store']);
         Route::post('/bills/sync', [BillController::class, 'sync']);
+        Route::get('/bills/{uuid}', [BillController::class, 'show']);
+        Route::get('/customers/search', [CustomerController::class, 'search']);
     });
 
     Route::middleware('permission:add-expense')->group(function () {
