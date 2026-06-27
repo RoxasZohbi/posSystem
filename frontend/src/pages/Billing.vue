@@ -5,8 +5,15 @@
       <div class="left-panel">
         <div class="form-card">
           <h3>Customer Info</h3>
-          <div class="form-group"><label>Customer Name</label><input v-model="form.customer_name" required /></div>
-          <div class="form-group"><label>Customer Phone</label><input v-model="form.customer_phone" required /></div>
+          <div class="form-group">
+            <label>Customer Phone</label>
+            <input v-model="form.customer_phone" @input="onPhoneInput" placeholder="Enter phone to search..." required />
+            <span v-if="customerFound" class="customer-tag">Returning customer</span>
+          </div>
+          <div class="form-group">
+            <label>Customer Name</label>
+            <input v-model="form.customer_name" placeholder="Name" required />
+          </div>
           <div class="form-group">
             <label>Staff</label>
             <select v-model="form.staff_id" required>
@@ -62,7 +69,6 @@
           <button @click="submit" :disabled="submitting || !form.items.length || !form.customer_name || !form.staff_id" class="btn-submit">
             {{ submitting ? 'Saving...' : offline.isOffline ? 'Queue Bill' : 'Save Bill' }}
           </button>
-          <p v-if="successMsg" class="success-msg">{{ successMsg }}</p>
         </div>
       </div>
     </div>
@@ -71,9 +77,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import ServiceRepository from '../Repositories/ServiceRepository'
 import DealRepository from '../Repositories/DealRepository'
 import StaffRepository from '../Repositories/StaffRepository'
+import CustomerRepository from '../Repositories/CustomerRepository'
 import { useBillsStore } from '../stores/bills'
 import { useOfflineStore } from '../stores/offline'
 import type { Service, Deal, StaffMember, BillItem } from '../types/index'
@@ -86,6 +94,7 @@ interface BillForm {
   items: BillItem[]
 }
 
+const router = useRouter()
 const billsStore = useBillsStore()
 const offline = useOfflineStore()
 const services = ref<Service[]>([])
@@ -93,9 +102,28 @@ const deals = ref<Deal[]>([])
 const staffList = ref<StaffMember[]>([])
 const activeTab = ref<'service' | 'deal'>('service')
 const submitting = ref(false)
-const successMsg = ref('')
+const customerFound = ref(false)
 const form = ref<BillForm>({ customer_name: '', customer_phone: '', staff_id: '', payment_type: 'cash', items: [] })
 const total = computed(() => form.value.items.reduce((sum, i) => sum + parseFloat(String(i.price)), 0))
+
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+
+function onPhoneInput() {
+  customerFound.value = false
+  if (searchTimeout) clearTimeout(searchTimeout)
+  if (form.value.customer_phone.length < 3) return
+  searchTimeout = setTimeout(async () => {
+    try {
+      const { data } = await CustomerRepository.search(form.value.customer_phone)
+      if (data) {
+        form.value.customer_name = data.name
+        customerFound.value = true
+      }
+    } catch {
+      // not found — leave name blank
+    }
+  }, 400)
+}
 
 function addItem(type: 'service' | 'deal', item: Service | Deal) {
   form.value.items.push({
@@ -111,11 +139,14 @@ function removeItem(i: number) { form.value.items.splice(i, 1) }
 
 async function submit() {
   submitting.value = true
-  successMsg.value = ''
   try {
     const result = await billsStore.submitBill({ ...form.value })
-    successMsg.value = result.offline ? 'Bill queued for sync.' : 'Bill saved!'
-    form.value = { customer_name: '', customer_phone: '', staff_id: '', payment_type: 'cash', items: [] }
+    if (result.offline) {
+      form.value = { customer_name: '', customer_phone: '', staff_id: '', payment_type: 'cash', items: [] }
+      customerFound.value = false
+    } else {
+      router.push({ name: 'Receipt', params: { uuid: result.bill.uuid } })
+    }
   } finally {
     submitting.value = false
   }
@@ -142,6 +173,7 @@ onMounted(async () => {
 .form-group { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
 .form-group label { font-size: 0.875rem; font-weight: 500; color: #374151; }
 .form-group input, .form-group select { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; }
+.customer-tag { font-size: 0.75rem; color: #16a34a; background: #dcfce7; padding: 0.15rem 0.5rem; border-radius: 10px; align-self: flex-start; }
 .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
 .tab { padding: 0.4rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb; cursor: pointer; font-size: 0.875rem; }
 .tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
@@ -159,5 +191,4 @@ onMounted(async () => {
 .offline-notice { color: #f59e0b; font-size: 0.8rem; background: #fffbeb; padding: 0.5rem; border-radius: 4px; margin-top: 0.75rem; }
 .btn-submit { width: 100%; margin-top: 1rem; padding: 0.75rem; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-.success-msg { color: #22c55e; font-size: 0.875rem; text-align: center; margin-top: 0.5rem; }
 </style>

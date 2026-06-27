@@ -7,6 +7,9 @@ export default {
   getAll() {
     return Client.get<Bill[]>(resource)
   },
+  getByUuid(uuid: string) {
+    return Client.get<Bill>(`${resource}/${uuid}`)
+  },
   create(data: Omit<Bill, 'id'>) {
     return Client.post<Bill>(resource, data)
   },

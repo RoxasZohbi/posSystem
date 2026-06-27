@@ -6,6 +6,12 @@ export interface User {
   permissions: string[]
 }
 
+export interface Customer {
+  id: number
+  name: string
+  phone: string
+}
+
 export interface Service {
   id: number
   name: string
