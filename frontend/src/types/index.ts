@@ -20,6 +20,7 @@ export interface StaffMember {
   email?: string
   phone: string
   nic: string
+  commission_rate?: number | string
 }
 
 export interface Deal {
@@ -47,6 +48,7 @@ export interface Bill {
   staff_id: number | string
   staff?: StaffMember
   staff_name?: string
+  payment_type?: 'cash' | 'card' | 'online'
   items: BillItem[]
   total?: number | string
   created_at?: string
@@ -64,16 +66,26 @@ export interface Expense {
 export interface StaffSummary {
   staff_id: number
   staff_name: string
+  commission_rate: number
   bill_count: number
   total: number
+  commission: number
+}
+
+export interface PaymentBreakdown {
+  cash: number
+  card: number
+  online: number
 }
 
 export interface DailyReport {
   date: string
   total_revenue: number
   total_expenses: number
+  total_commissions: number
   net: number
   bill_count: number
+  payment_breakdown?: PaymentBreakdown
   staff_summary?: StaffSummary[]
 }
 

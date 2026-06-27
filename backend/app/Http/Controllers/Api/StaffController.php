@@ -22,6 +22,7 @@ class StaffController extends Controller
             'phone' => 'required|string|max:20',
             'nic' => 'required|string|max:20',
             'thumbprint' => 'nullable|string',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
         ]);
         return response()->json(Staff::create([...$validated, 'created_by' => $request->user()->id]), 201);
     }
@@ -35,6 +36,7 @@ class StaffController extends Controller
                 'phone' => 'sometimes|string|max:20',
                 'nic' => 'sometimes|string|max:20',
                 'thumbprint' => 'nullable|string',
+                'commission_rate' => 'nullable|numeric|min:0|max:100',
             ]),
             'updated_by' => $request->user()->id,
         ]);

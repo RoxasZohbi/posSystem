@@ -15,6 +15,12 @@
           <div class="form-group"><label>Email</label><input v-model="form.email" type="email" /></div>
           <div class="form-group"><label>NIC</label><input v-model="form.nic" required /></div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Commission Rate (%)</label>
+            <input v-model.number="form.commission_rate" type="number" min="0" max="100" step="0.01" placeholder="0.00" />
+          </div>
+        </div>
         <div class="form-actions">
           <button type="submit" class="btn-primary">{{ editing ? 'Update' : 'Create' }}</button>
           <button type="button" @click="cancel" class="btn-secondary">Cancel</button>
@@ -23,10 +29,11 @@
     </div>
     <div v-if="loading" class="loading">Loading...</div>
     <table v-else class="data-table">
-      <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>NIC</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>NIC</th><th>Commission</th><th>Actions</th></tr></thead>
       <tbody>
         <tr v-for="s in staff" :key="s.id">
           <td>{{ s.name }}</td><td>{{ s.phone }}</td><td>{{ s.email || '-' }}</td><td>{{ s.nic }}</td>
+          <td>{{ parseFloat(String(s.commission_rate ?? 0)).toFixed(2) }}%</td>
           <td>
             <button @click="edit(s)" class="btn-sm">Edit</button>
             <button @click="remove(s.id)" class="btn-sm btn-danger">Delete</button>
@@ -42,11 +49,19 @@ import { ref, onMounted } from 'vue'
 import StaffRepository from '../Repositories/StaffRepository'
 import type { StaffMember } from '../types/index'
 
+interface StaffForm {
+  name: string
+  email?: string
+  phone: string
+  nic: string
+  commission_rate: number
+}
+
 const staff = ref<StaffMember[]>([])
 const loading = ref(false)
 const showForm = ref(false)
 const editing = ref<number | null>(null)
-const form = ref<Omit<StaffMember, 'id'>>({ name: '', email: '', phone: '', nic: '' })
+const form = ref<StaffForm>({ name: '', email: '', phone: '', nic: '', commission_rate: 0 })
 
 async function load() {
   loading.value = true
@@ -56,14 +71,14 @@ async function load() {
 
 function edit(s: StaffMember) {
   editing.value = s.id
-  form.value = { name: s.name, email: s.email, phone: s.phone, nic: s.nic }
+  form.value = { name: s.name, email: s.email, phone: s.phone, nic: s.nic, commission_rate: parseFloat(String(s.commission_rate ?? 0)) }
   showForm.value = true
 }
 
 function cancel() {
   showForm.value = false
   editing.value = null
-  form.value = { name: '', email: '', phone: '', nic: '' }
+  form.value = { name: '', email: '', phone: '', nic: '', commission_rate: 0 }
 }
 
 async function save() {

@@ -11,7 +11,8 @@ class Staff extends Model
     use SoftDeletes;
 
     protected $table = 'staff';
-    protected $fillable = ['name', 'email', 'phone', 'nic', 'thumbprint', 'created_by', 'updated_by'];
+    protected $fillable = ['name', 'email', 'phone', 'nic', 'thumbprint', 'commission_rate', 'created_by', 'updated_by'];
+    protected $casts = ['commission_rate' => 'decimal:2'];
 
     public function createdBy(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function updatedBy(): BelongsTo { return $this->belongsTo(User::class, 'updated_by'); }
