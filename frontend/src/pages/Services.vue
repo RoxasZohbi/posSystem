@@ -26,7 +26,7 @@
         <tr v-for="s in services" :key="s.id">
           <td>{{ s.name }}</td>
           <td>{{ s.description || '-' }}</td>
-          <td>PKR {{ parseFloat(s.price).toFixed(2) }}</td>
+          <td>PKR {{ parseFloat(String(s.price)).toFixed(2) }}</td>
           <td><span :class="s.is_active ? 'badge-active' : 'badge-inactive'">{{ s.is_active ? 'Active' : 'Inactive' }}</span></td>
           <td>
             <button @click="edit(s)" class="btn-sm">Edit</button>
@@ -38,33 +38,49 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getServices, createService, updateService, deleteService } from '../api/index.js'
+import ServiceRepository from '../Repositories/ServiceRepository'
+import type { Service } from '../types/index'
 
-const services = ref([])
+const services = ref<Service[]>([])
 const loading = ref(false)
 const showForm = ref(false)
-const editing = ref(null)
-const form = ref({ name: '', description: '', price: '', is_active: true })
+const editing = ref<number | null>(null)
+const form = ref<Omit<Service, 'id'>>({ name: '', description: '', price: '', is_active: true })
 
 async function load() {
   loading.value = true
-  try { const { data } = await getServices(); services.value = data }
+  try { const { data } = await ServiceRepository.getAll(); services.value = data }
   finally { loading.value = false }
 }
 
-function edit(s) { editing.value = s.id; form.value = { name: s.name, description: s.description, price: s.price, is_active: s.is_active }; showForm.value = true }
-function cancel() { showForm.value = false; editing.value = null; form.value = { name: '', description: '', price: '', is_active: true } }
-
-async function save() {
-  editing.value ? await updateService(editing.value, form.value) : await createService(form.value)
-  cancel(); load()
+function edit(s: Service) {
+  editing.value = s.id
+  form.value = { name: s.name, description: s.description, price: s.price, is_active: s.is_active }
+  showForm.value = true
 }
 
-async function remove(id) {
+function cancel() {
+  showForm.value = false
+  editing.value = null
+  form.value = { name: '', description: '', price: '', is_active: true }
+}
+
+async function save() {
+  if (editing.value) {
+    await ServiceRepository.update(editing.value, form.value)
+  } else {
+    await ServiceRepository.create(form.value)
+  }
+  cancel()
+  load()
+}
+
+async function remove(id: number) {
   if (!confirm('Delete this service?')) return
-  await deleteService(id); load()
+  await ServiceRepository.delete(id)
+  load()
 }
 
 onMounted(load)

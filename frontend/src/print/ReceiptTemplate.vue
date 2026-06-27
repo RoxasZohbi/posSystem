@@ -21,11 +21,11 @@
       <div class="items-header"><span>Item</span><span>Price</span></div>
       <div v-for="item in bill.items" :key="item.id || item.name" class="item-row">
         <span class="item-name">{{ item.name }}</span>
-        <span>PKR {{ parseFloat(item.price).toFixed(2) }}</span>
+        <span>PKR {{ parseFloat(String(item.price)).toFixed(2) }}</span>
       </div>
     </div>
     <div class="divider">- - - - - - - - - - - - - - -</div>
-    <div class="receipt-total"><span>TOTAL</span><span>PKR {{ parseFloat(bill.total).toFixed(2) }}</span></div>
+    <div class="receipt-total"><span>TOTAL</span><span>PKR {{ parseFloat(String(bill.total)).toFixed(2) }}</span></div>
     <div class="divider">- - - - - - - - - - - - - - -</div>
     <div class="receipt-footer">
       <p>Thank you for visiting us!</p>
@@ -34,14 +34,16 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
+import type { Bill } from '../types/index'
 
-const props = defineProps({
-  bill: { type: Object, required: true },
-  businessName: { type: String, default: 'Salon POS' },
-})
+const props = defineProps<{
+  bill: Bill
+  businessName?: string
+}>()
 
+const businessName = computed(() => props.businessName ?? 'Salon POS')
 const billDate = computed(() => props.bill.created_at ? new Date(props.bill.created_at) : new Date())
 const formattedDate = computed(() => billDate.value.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }))
 const formattedTime = computed(() => billDate.value.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }))

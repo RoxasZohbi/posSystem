@@ -10,14 +10,14 @@
       <div class="summary-card">
         <p>Date: <strong>{{ report.date }}</strong></p>
         <p>Total Bills: <strong>{{ report.bill_count }}</strong></p>
-        <p>Total Revenue: <strong>PKR {{ parseFloat(report.total_revenue).toFixed(2) }}</strong></p>
+        <p>Total Revenue: <strong>PKR {{ parseFloat(String(report.total_revenue)).toFixed(2) }}</strong></p>
       </div>
       <h3>Staff Breakdown</h3>
       <table class="data-table">
         <thead><tr><th>Staff</th><th>Bills</th><th>Revenue Generated</th></tr></thead>
         <tbody>
           <tr v-for="s in report.staff_summary" :key="s.staff_id">
-            <td>{{ s.staff_name }}</td><td>{{ s.bill_count }}</td><td>PKR {{ parseFloat(s.total).toFixed(2) }}</td>
+            <td>{{ s.staff_name }}</td><td>{{ s.bill_count }}</td><td>PKR {{ parseFloat(String(s.total)).toFixed(2) }}</td>
           </tr>
         </tbody>
       </table>
@@ -25,19 +25,25 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getDailyReport } from '../api/index.js'
+import ReportRepository from '../Repositories/ReportRepository'
+import type { DailyReport } from '../types/index'
 
 const selectedDate = ref(new Date().toISOString().split('T')[0])
-const report = ref(null)
+const report = ref<DailyReport | null>(null)
 const loading = ref(false)
 
 async function load() {
   loading.value = true
-  try { const { data } = await getDailyReport(selectedDate.value); report.value = data }
-  catch (e) { console.error(e) }
-  finally { loading.value = false }
+  try {
+    const { data } = await ReportRepository.daily(selectedDate.value)
+    report.value = data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(load)

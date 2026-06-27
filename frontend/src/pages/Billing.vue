@@ -24,12 +24,12 @@
           <div class="item-list">
             <template v-if="activeTab === 'service'">
               <div v-for="s in services" :key="s.id" class="item-row" @click="addItem('service', s)">
-                <span>{{ s.name }}</span><span>PKR {{ parseFloat(s.price).toFixed(2) }}</span>
+                <span>{{ s.name }}</span><span>PKR {{ parseFloat(String(s.price)).toFixed(2) }}</span>
               </div>
             </template>
             <template v-else>
               <div v-for="d in deals" :key="d.id" class="item-row" @click="addItem('deal', d)">
-                <span>{{ d.name }}</span><span>PKR {{ parseFloat(d.price).toFixed(2) }}</span>
+                <span>{{ d.name }}</span><span>PKR {{ parseFloat(String(d.price)).toFixed(2) }}</span>
               </div>
             </template>
           </div>
@@ -43,7 +43,7 @@
             <div v-for="(item, i) in form.items" :key="i" class="receipt-item">
               <span>{{ item.name }}</span>
               <div style="display:flex;gap:0.5rem;align-items:center">
-                <span>PKR {{ parseFloat(item.price).toFixed(2) }}</span>
+                <span>PKR {{ parseFloat(String(item.price)).toFixed(2) }}</span>
                 <button @click="removeItem(i)" class="remove-btn">x</button>
               </div>
             </div>
@@ -60,39 +60,63 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getServices, getDeals, getStaff } from '../api/index.js'
-import { useBillsStore } from '../stores/bills.js'
-import { useOfflineStore } from '../stores/offline.js'
+import ServiceRepository from '../Repositories/ServiceRepository'
+import DealRepository from '../Repositories/DealRepository'
+import StaffRepository from '../Repositories/StaffRepository'
+import { useBillsStore } from '../stores/bills'
+import { useOfflineStore } from '../stores/offline'
+import type { Service, Deal, StaffMember, BillItem } from '../types/index'
+
+interface BillForm {
+  customer_name: string
+  customer_phone: string
+  staff_id: number | string
+  items: BillItem[]
+}
 
 const billsStore = useBillsStore()
 const offline = useOfflineStore()
-const services = ref([])
-const deals = ref([])
-const staffList = ref([])
-const activeTab = ref('service')
+const services = ref<Service[]>([])
+const deals = ref<Deal[]>([])
+const staffList = ref<StaffMember[]>([])
+const activeTab = ref<'service' | 'deal'>('service')
 const submitting = ref(false)
 const successMsg = ref('')
-const form = ref({ customer_name: '', customer_phone: '', staff_id: '', items: [] })
-const total = computed(() => form.value.items.reduce((sum, i) => sum + parseFloat(i.price), 0))
+const form = ref<BillForm>({ customer_name: '', customer_phone: '', staff_id: '', items: [] })
+const total = computed(() => form.value.items.reduce((sum, i) => sum + parseFloat(String(i.price)), 0))
 
-function addItem(type, item) {
-  form.value.items.push({ type, service_id: type === 'service' ? item.id : null, deal_id: type === 'deal' ? item.id : null, name: item.name, price: item.price })
+function addItem(type: 'service' | 'deal', item: Service | Deal) {
+  form.value.items.push({
+    type,
+    service_id: type === 'service' ? item.id : null,
+    deal_id: type === 'deal' ? item.id : null,
+    name: item.name,
+    price: item.price,
+  })
 }
-function removeItem(i) { form.value.items.splice(i, 1) }
+
+function removeItem(i: number) { form.value.items.splice(i, 1) }
 
 async function submit() {
-  submitting.value = true; successMsg.value = ''
+  submitting.value = true
+  successMsg.value = ''
   try {
     const result = await billsStore.submitBill({ ...form.value })
     successMsg.value = result.offline ? 'Bill queued for sync.' : 'Bill saved!'
     form.value = { customer_name: '', customer_phone: '', staff_id: '', items: [] }
-  } finally { submitting.value = false }
+  } finally {
+    submitting.value = false
+  }
 }
 
 onMounted(async () => {
-  const [s, d, st] = await Promise.all([getServices(), getDeals(), getStaff()])
+  const [s, d, st] = await Promise.all([
+    ServiceRepository.getAll(),
+    DealRepository.getAll(),
+    StaffRepository.getAll(),
+  ])
   services.value = s.data.filter(x => x.is_active)
   deals.value = d.data.filter(x => x.is_active)
   staffList.value = st.data

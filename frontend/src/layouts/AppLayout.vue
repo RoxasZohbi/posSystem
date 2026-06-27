@@ -34,9 +34,9 @@
   </div>
 </template>
 
-<script setup>
-import { useAuthStore } from '../stores/auth.js'
-import { useOfflineStore } from '../stores/offline.js'
+<script setup lang="ts">
+import { useAuthStore } from '../stores/auth'
+import { useOfflineStore } from '../stores/offline'
 import { useRouter } from 'vue-router'
 
 const auth = useAuthStore()

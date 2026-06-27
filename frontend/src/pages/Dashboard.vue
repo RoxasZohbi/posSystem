@@ -28,21 +28,27 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getDailyReport } from '../api/index.js'
+import ReportRepository from '../Repositories/ReportRepository'
+import type { DailyReport } from '../types/index'
 
 const selectedDate = ref(new Date().toISOString().split('T')[0])
-const report = ref(null)
+const report = ref<DailyReport | null>(null)
 const loading = ref(false)
 
-const fmt = (val) => new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR' }).format(val)
+const fmt = (val: number) => new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR' }).format(val)
 
 async function loadReport() {
   loading.value = true
-  try { const { data } = await getDailyReport(selectedDate.value); report.value = data }
-  catch (e) { console.error(e) }
-  finally { loading.value = false }
+  try {
+    const { data } = await ReportRepository.daily(selectedDate.value)
+    report.value = data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(loadReport)
