@@ -55,6 +55,7 @@ export interface Bill {
   staff?: StaffMember
   staff_name?: string
   payment_type?: 'cash' | 'card' | 'online'
+  tip?: number | string
   items: BillItem[]
   total?: number | string
   created_at?: string
@@ -75,6 +76,7 @@ export interface StaffSummary {
   commission_rate: number
   bill_count: number
   total: number
+  tips: number
   commission: number
 }
 
@@ -87,6 +89,7 @@ export interface PaymentBreakdown {
 export interface DailyReport {
   date: string
   total_revenue: number
+  total_tips: number
   total_expenses: number
   total_commissions: number
   net: number

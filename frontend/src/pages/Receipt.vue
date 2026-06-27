@@ -24,9 +24,17 @@
         </tbody>
       </table>
       <div class="divider"></div>
+      <div class="subtotal-row">
+        <span>Subtotal</span>
+        <span>PKR {{ parseFloat(String(bill.total)).toFixed(2) }}</span>
+      </div>
+      <div v-if="tipAmount > 0" class="tip-row">
+        <span>🌟 Tip</span>
+        <span class="tip-val">PKR {{ tipAmount.toFixed(2) }}</span>
+      </div>
       <div class="total-row">
         <strong>Total</strong>
-        <strong>PKR {{ parseFloat(String(bill.total)).toFixed(2) }}</strong>
+        <strong>PKR {{ grandTotal.toFixed(2) }}</strong>
       </div>
       <div class="divider"></div>
       <p class="thank-you">Thank you for visiting!</p>
@@ -41,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BillRepository from '../Repositories/BillRepository'
 import type { Bill } from '../types/index'
@@ -50,8 +58,10 @@ const route = useRoute()
 const router = useRouter()
 const bill = ref<Bill | null>(null)
 const loading = ref(true)
-
 const window = globalThis.window
+
+const tipAmount = computed(() => parseFloat(String(bill.value?.tip ?? 0)))
+const grandTotal = computed(() => parseFloat(String(bill.value?.total ?? 0)) + tipAmount.value)
 
 function formatDate(dt?: string) {
   if (!dt) return ''
@@ -74,7 +84,7 @@ onMounted(async () => {
 .receipt-wrapper { display: flex; justify-content: center; padding: 2rem 1rem; min-height: 100vh; background: #f3f4f6; }
 .receipt { background: #fff; width: 320px; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 0.875rem; }
 .receipt-header { text-align: center; margin-bottom: 0.5rem; }
-.salon-name { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.25rem; color: #1a1a2e; }
+.salon-name { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.25rem; color: #0f172a; }
 .receipt-date { color: #6b7280; margin: 0; font-size: 0.8rem; }
 .divider { border-top: 1px dashed #d1d5db; margin: 0.75rem 0; }
 .receipt-meta { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -88,14 +98,16 @@ onMounted(async () => {
 .items-table th { font-size: 0.8rem; color: #6b7280; padding-bottom: 0.4rem; text-align: left; }
 .items-table td { padding: 0.3rem 0; border-bottom: 1px solid #f3f4f6; }
 .text-right { text-align: right; }
-.total-row { display: flex; justify-content: space-between; font-size: 1rem; }
+.subtotal-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem; }
+.tip-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem; }
+.tip-val { color: #d97706; font-weight: 600; }
+.total-row { display: flex; justify-content: space-between; font-size: 1rem; padding-top: 0.4rem; border-top: 1px solid #e2e8f0; }
 .thank-you { text-align: center; color: #6b7280; margin: 0.5rem 0 0.25rem; font-size: 0.8rem; }
 .receipt-id { text-align: center; color: #9ca3af; font-size: 0.7rem; margin: 0; word-break: break-all; }
 .print-actions { display: flex; gap: 0.5rem; margin-top: 1.25rem; }
-.btn-print { flex: 1; padding: 0.6rem; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-.btn-new { flex: 1; padding: 0.6rem; background: #f3f4f6; color: #374151; border: none; border-radius: 6px; cursor: pointer; }
+.btn-print { flex: 1; padding: 0.6rem; background: #0f172a; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.btn-new { flex: 1; padding: 0.6rem; background: #f1f5f9; color: #374151; border: none; border-radius: 6px; cursor: pointer; }
 .loading, .not-found { text-align: center; color: #6b7280; padding: 3rem; }
-
 @media print {
   .no-print { display: none !important; }
   .receipt-wrapper { background: none; padding: 0; }

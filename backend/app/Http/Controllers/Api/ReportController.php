@@ -21,45 +21,49 @@ class ReportController extends Controller
 
         $expenses = Expense::whereDate('date', $date)->get();
 
-        $totalRevenue = (float) $bills->sum('total');
-        $totalExpenses = (float) $expenses->sum('amount');
+        $totalRevenue    = (float) $bills->sum('total');
+        $totalTips       = (float) $bills->sum('tip');
+        $totalExpenses   = (float) $expenses->sum('amount');
 
         $staffSummary = $bills->groupBy('staff_id')->map(function ($staffBills, $staffId) {
-            $staff = $staffBills->first()->staff;
-            $staffTotal = (float) $staffBills->sum('total');
+            $staff          = $staffBills->first()->staff;
+            $staffTotal     = (float) $staffBills->sum('total');
+            $staffTips      = (float) $staffBills->sum('tip');
             $commissionRate = (float) ($staff->commission_rate ?? 0);
-            $commission = round($staffTotal * $commissionRate / 100, 2);
+            $commission     = round($staffTotal * $commissionRate / 100, 2);
 
             return [
-                'staff_id' => $staffId,
-                'staff_name' => $staff->name ?? 'Unknown',
+                'staff_id'        => $staffId,
+                'staff_name'      => $staff->name ?? 'Unknown',
                 'commission_rate' => $commissionRate,
-                'bill_count' => $staffBills->count(),
-                'total' => $staffTotal,
-                'commission' => $commission,
+                'bill_count'      => $staffBills->count(),
+                'total'           => $staffTotal,
+                'tips'            => $staffTips,
+                'commission'      => $commission,
             ];
         })->values();
 
         $totalCommissions = (float) $staffSummary->sum('commission');
-        $net = $totalRevenue - $totalCommissions - $totalExpenses;
+        $net              = $totalRevenue - $totalCommissions - $totalExpenses;
 
         $paymentBreakdown = [
-            'cash' => (float) $bills->where('payment_type', 'cash')->sum('total'),
-            'card' => (float) $bills->where('payment_type', 'card')->sum('total'),
+            'cash'   => (float) $bills->where('payment_type', 'cash')->sum('total'),
+            'card'   => (float) $bills->where('payment_type', 'card')->sum('total'),
             'online' => (float) $bills->where('payment_type', 'online')->sum('total'),
         ];
 
         return response()->json([
-            'date' => $date,
-            'total_revenue' => $totalRevenue,
-            'total_expenses' => $totalExpenses,
-            'total_commissions' => $totalCommissions,
-            'net' => $net,
-            'bill_count' => $bills->count(),
-            'payment_breakdown' => $paymentBreakdown,
-            'staff_summary' => $staffSummary,
-            'bills' => $bills,
-            'expenses' => $expenses,
+            'date'             => $date,
+            'total_revenue'    => $totalRevenue,
+            'total_tips'       => $totalTips,
+            'total_expenses'   => $totalExpenses,
+            'total_commissions'=> $totalCommissions,
+            'net'              => $net,
+            'bill_count'       => $bills->count(),
+            'payment_breakdown'=> $paymentBreakdown,
+            'staff_summary'    => $staffSummary,
+            'bills'            => $bills,
+            'expenses'         => $expenses,
         ]);
     }
 }
