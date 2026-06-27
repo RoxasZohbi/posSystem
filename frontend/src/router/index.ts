@@ -23,7 +23,14 @@ const router = createRouter({
         { path: 'billing', name: 'Billing', component: () => import('../pages/Billing.vue'), meta: { permission: 'create-bill' } },
         { path: 'expenses', name: 'Expenses', component: () => import('../pages/Expenses.vue'), meta: { permission: 'add-expense' } },
         { path: 'commission', name: 'Commission', component: () => import('../pages/Commission.vue'), meta: { permission: 'view-own-commission' } },
-        { path: 'receipt/:uuid', name: 'Receipt', component: () => import('../pages/Receipt.vue'), meta: { permission: 'create-bill' } },
+      ],
+    },
+    {
+      path: '/receipt/:uuid',
+      component: () => import('../layouts/BlankLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', name: 'Receipt', component: () => import('../pages/Receipt.vue'), meta: { permission: 'create-bill' } },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },

@@ -161,7 +161,7 @@ onMounted(loadReport)
 
 <style scoped>
 .page { max-width: 1000px; }
-.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.75rem; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.75rem; gap: 1rem; flex-wrap: wrap; }
 .page-title { font-size: 1.6rem; font-weight: 700; margin: 0 0 0.2rem; color: #0f172a; }
 .page-sub { font-size: 0.85rem; color: #94a3b8; margin: 0; }
 .date-input { padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.875rem; color: #374151; background: #fff; }
@@ -218,4 +218,14 @@ onMounted(loadReport)
 
 .empty-state { text-align: center; padding: 4rem; color: #94a3b8; }
 .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+@media (max-width: 640px) {
+  .page-title { font-size: 1.25rem; }
+  .date-input { width: 100%; }
+  .stat-grid { grid-template-columns: repeat(2,1fr); }
+  .payment-grid { grid-template-columns: 1fr; }
+  .stat-value { font-size: 1rem; }
+  .data-table th, .data-table td { padding: 0.6rem 0.75rem; font-size: 0.8rem; }
+  .table-card { overflow-x: auto; }
+}
 </style>
